@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новости</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="search-bar">
+        <div class="search-container">
+            <div class="search-input-container">
+                <form method="GET" action="{{ url_for('news') }}" class="search-form">
+                    <input type="text" name="search" placeholder="Поиск новостей..." value="{{ request.args.get('search', '') }}">
+                    <img src="{{ url_for('static', filename='images/search-icon.svg') }}" alt="Search">
+                </form>
+            </div>
+            <div class="categories">
+                {% for category, name in categories.items() %}
+                <a href="{{ url_for('news', category=category) }}" 
+                   class="category-button {% if current_category == category %}active{% endif %}">
+                    {{ name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-trigger"></div>
+    <div class="user-profile">
+        <div class="profile-content">
+            <div class="profile-left">
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Avatar">
+                </div>
+                <div class="user-info">
+                    <div class="user-main-info">
+                        <h3>{{ user.nickname or user.email }}</h3>
+                        <span class="user-time">{{ hours_online }}ч {{ minutes_online }}мин на сайте</span>
+                    </div>
+                    <div class="user-additional-info">
+                        <span class="info-item">Регистрация: {{ user.registration_date.strftime('%d.%m.%Y') }}</span>
+                        <span class="info-item">•</span>
+                        {% if (datetime.utcnow() - user.last_login).total_seconds() < 300 %}
+                        <span class="info-item online">Онлайн</span>
+                        {% else %}
+                        <span class="info-item">Последний вход: {{ user.last_login.strftime('%H:%M') }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="profile-right">
+                <a href="{{ url_for('logout') }}" class="logout-button">
+                    <span class="logout-icon">↪</span>
+                    <span class="logout-text">Выйти</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="news-grid">
+            {% for article in articles %}
+            <div class="news-card">
+                {% if article.urlToImage %}
+                <div class="news-image">
+                    <img src="{{ article.urlToImage }}" alt="{{ article.title }}">
+                </div>
+                {% endif %}
+                <div class="news-content">
+                    <h2>{{ article.title }}</h2>
+                    <p>{{ article.description }}</p>
+                    <div class="news-meta">
+                        <span class="news-date">{{ article.publishedAt }}</span>
+                        <a href="{{ url_for('article', article_url=article.url, category=current_category, search=request.args.get('search', '')) }}" class="read-more">Читать статью</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html> 

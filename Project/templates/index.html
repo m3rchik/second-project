@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <h1>Добро пожаловать!</h1>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="auth-tabs">
+            <button class="tab-button active" onclick="showTab('login')">Вход</button>
+            <button class="tab-button" onclick="showTab('register')">Регистрация</button>
+        </div>
+
+        <form method="POST" id="login-form" class="auth-form">
+            <div class="form-group">
+                <input type="text" name="login" placeholder="Email или псевдоним *" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" placeholder="Пароль *" required>
+            </div>
+            <button type="submit" name="action" value="login">Войти</button>
+            <div class="forgot-password">
+                <button type="button" onclick="toggleResetForm()">Забыли пароль?</button>
+            </div>
+        </form>
+
+        <!-- Форма восстановления пароля (изначально скрыта) -->
+        <form method="POST" action="{{ url_for('request_reset') }}" id="reset-form" class="auth-form reset-form" style="display: none;">
+            <h2>Восстановление пароля</h2>
+            <div class="form-group">
+                <input type="email" name="email" placeholder="Введите ваш email" required>
+            </div>
+            <div class="form-buttons">
+                <button type="submit">Восстановить пароль</button>
+                <button type="button" onclick="toggleResetForm()" class="cancel-button">Отмена</button>
+            </div>
+        </form>
+
+        <form method="POST" id="register-form" class="auth-form" style="display: none;" onsubmit="return validatePassword()">
+            <div class="form-group">
+                <input type="email" name="login" placeholder="Email *" required>
+            </div>
+            <div class="form-group password-group">
+                <input type="password" name="password" id="register-password" 
+                       placeholder="Пароль *" required
+                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$"
+                       oninput="checkPassword(this.value)">
+                <div class="password-requirements">
+                    <p>Требования к паролю:</p>
+                    <ul>
+                        <li id="length">Минимум 8 символов</li>
+                        <li id="lowercase">Строчные буквы (a-z)</li>
+                        <li id="uppercase">Заглавные буквы (A-Z)</li>
+                        <li id="number">Цифры (0-9)</li>
+                        <li id="special">Специальные символы (@$!%*?&-_)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="text" name="nickname" placeholder="Псевдоним">
+                <div class="field-hint">Как вас будут видеть другие пользователи</div>
+            </div>
+            <div class="form-group">
+                <input type="tel" name="phone" placeholder="Телефон" pattern="[0-9+\s-()]*">
+                <div class="field-hint">Необязательное поле</div>
+            </div>
+            <button type="submit" name="action" value="register">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <div class="feature-icon">📰</div>
+            <h3>Актуальные новости</h3>
+            <p>Будьте в курсе последних событий из разных категорий</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🔍</div>
+            <h3>Удобный поиск</h3>
+            <p>Находите интересующие вас новости быстро и легко</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📱</div>
+            <h3>Всегда на связи</h3>
+            <p>Читайте новости с любого устройства</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🌐</div>
+            <h3>Персонализация</h3>
+            <p>Настройте ленту новостей под свои интересы</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleResetForm() {
+            const loginForm = document.getElementById('login-form');
+            const resetForm = document.getElementById('reset-form');
+            const registerForm = document.getElementById('register-form');
+            const authTabs = document.querySelector('.auth-tabs');
+            const messages = document.querySelector('.messages');
+            
+            if (resetForm.style.display === 'none') {
+                resetForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'none';
+                authTabs.style.display = 'none';
+                if (messages) {
+                    messages.style.display = 'none';
+                }
+            } else {
+                resetForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                authTabs.style.display = 'flex';
+                if (messages) {
+                    messages.style.display = 'block';
+                }
+            }
+        }
+
+        function showTab(tabName) {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const resetForm = document.getElementById('reset-form');
+            const authTabs = document.querySelector('.auth-tabs');
+            const buttons = document.querySelectorAll('.tab-button');
+            const messages = document.querySelector('.messages');
+            
+            resetForm.style.display = 'none';
+            authTabs.style.display = 'flex';
+            if (messages) {
+                messages.style.display = 'block';
+            }
+            
+            if (tabName === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+            }
+        }
+
+        function checkPassword(password) {
+            const requirements = {
+                length: password.length >= 8,
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[@$!%*?&\-_]/.test(password)
+            };
+
+            for (const [requirement, met] of Object.entries(requirements)) {
+                const element = document.getElementById(requirement);
+                if (met) {
+                    element.classList.add('met');
+                    element.classList.remove('unmet');
+                } else {
+                    element.classList.add('unmet');
+                    element.classList.remove('met');
+                }
+            }
+        }
+
+        function validatePassword() {
+            const password = document.getElementById('register-password').value;
+            const requirements = {
+                length: password.length >= 8,
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[@$!%*?&\-_]/.test(password)
+            };
+
+            const allRequirementsMet = Object.values(requirements).every(met => met);
+            
+            if (!allRequirementsMet) {
+                alert('Пожалуйста, убедитесь, что пароль соответствует всем требованиям');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</body>
+</html> 

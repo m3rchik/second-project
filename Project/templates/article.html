@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="article-page">
+        <div class="article-header">
+            <a href="{{ url_for('news') }}" class="back-button">← Назад к новостям</a>
+            {% if user %}
+            <div class="user-mini-profile">
+                <span>{{ user.nickname or user.email }}</span>
+                <a href="{{ url_for('logout') }}" class="mini-logout">Выйти</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="article-content">
+            <h1 class="article-title">{{ article.title }}</h1>
+            
+            <div class="article-meta">
+                <span class="article-source">{{ article.source.name }}</span>
+                <span class="article-date">Опубликовано: {{ article.publishedAt }}</span>
+            </div>
+
+            {% if article.urlToImage %}
+            <div class="article-image">
+                <img src="{{ article.urlToImage }}" alt="{{ article.title }}">
+            </div>
+            {% endif %}
+
+            <div class="article-text">
+                {% if article.content %}
+                <p class="article-content">{{ article.content }}</p>
+                {% elif article.description %}
+                <p class="article-description">{{ article.description }}</p>
+                <p class="article-note">Полный текст статьи доступен на сайте источника.</p>
+                {% else %}
+                <p class="article-note">К сожалению, полный текст статьи доступен только на сайте источника.</p>
+                {% endif %}
+            </div>
+
+            <div class="article-footer">
+                <p class="article-original">
+                    Читать полную версию статьи на сайте источника: 
+                    <a href="{{ article.url }}" target="_blank">{{ article.source.name }}</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
