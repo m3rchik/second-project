@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="{{ theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Избранные статьи</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=2) }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="favorites-page">
+    <div class="search-bar">
+        <div class="search-container">
+            <a href="{{ url_for('news') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Вернуться к новостям
+            </a>
+        </div>
+        <button class="theme-toggle" type="button" aria-label="Переключить тему">
+            <i class="fas {% if theme == 'dark' %}fa-sun{% else %}fa-moon{% endif %}"></i>
+        </button>
+    </div>
+
+    {% if user %}
+    <div class="side-menu">
+        <a href="{{ url_for('profile') }}" class="side-menu-item">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </a>
+        <a href="{{ url_for('favorites') }}" class="side-menu-item active">
+            <i class="fas fa-heart"></i>
+            <span>Избранное</span>
+        </a>
+        <a href="{{ url_for('history') }}" class="side-menu-item">
+            <i class="fas fa-history"></i>
+            <span>История</span>
+        </a>
+        <a href="{{ url_for('settings') }}" class="side-menu-item">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        {% if not favorites %}
+        <div class="empty-state">
+            <i class="fas fa-heart-broken"></i>
+            <p>У вас пока нет избранных статей</p>
+            <a href="{{ url_for('news') }}" class="button">Перейти к новостям</a>
+        </div>
+        {% else %}
+        <div class="news-grid">
+            {% for favorite in favorites %}
+            <div class="news-card animate-on-scroll" style="--card-index: {{ loop.index }}">
+                <div class="news-content">
+                    <h2>{{ favorite.article_title }}</h2>
+                    <div class="news-meta">
+                        <span class="news-date">Добавлено: {{ favorite.added_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                        <div class="news-actions">
+                            <a href="{{ url_for('article', article_url=favorite.article_url) }}" class="read-more">
+                                Читать статью
+                            </a>
+                            <button class="favorite-button active" data-url="{{ favorite.article_url }}" data-title="{{ favorite.article_title }}">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Функция для установки темы
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const themeToggles = document.querySelectorAll('.theme-toggle');
+            themeToggles.forEach(toggle => {
+                const icon = toggle.querySelector('i');
+                if (icon) {
+                    icon.className = `fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`;
+                }
+            });
+        }
+
+        // Инициализация темы
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+
+            // Обработчик клика по кнопке темы
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    setTheme(newTheme);
+                    
+                    fetch('/update_theme', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `theme=${newTheme}`
+                    });
+                });
+            }
+
+            // Анимация появления карточек
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            });
+
+            document.querySelectorAll('.animate-on-scroll').forEach(element => {
+                observer.observe(element);
+            });
+        });
+
+        // Обработка удаления из избранного
+        document.querySelectorAll('.favorite-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const url = this.dataset.url;
+                const title = this.dataset.title;
+                
+                fetch('/favorite/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'article_url': url,
+                        'article_title': title
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.is_favorite) {
+                        // Удаляем карточку из DOM
+                        this.closest('.news-card').remove();
+                        
+                        // Проверяем, остались ли ещё избранные статьи
+                        if (document.querySelectorAll('.news-card').length === 0) {
+                            location.reload(); // Перезагружаем страницу для показа пустого состояния
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при обновлении избранного');
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

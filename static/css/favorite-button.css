@@ -1,0 +1,158 @@
+.favorite-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: white;
+    border: 2px solid var(--primary-color);
+    border-radius: 30px;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.favorite-button:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+.favorite-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.favorite-button.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.favorite-icon {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.favorite-button:hover:not(:disabled) .favorite-icon {
+    transform: scale(1.2);
+}
+
+.favorite-button.loading .favorite-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.notification.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #dc2626;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Стили для кнопок избранного */
+.favorite-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.remove-favorite {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remove-favorite:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.remove-favorite:active {
+    transform: translateY(0);
+}
+
+.remove-favorite:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Анимация для удаления */
+.favorite-item {
+    transition: all 0.3s ease;
+}
+
+.favorite-item.removing {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Стили для пустого состояния */
+.empty-message {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    color: #6c757d;
+    font-style: italic;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .favorite-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .remove-favorite {
+        width: 100%;
+        justify-content: center;
+    }
+} 

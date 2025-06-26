@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="{{ theme }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новости</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=2) }}">
+</head>
+<body class="news-page">
+    <div class="search-bar">
+        <div class="search-container">
+            <form method="GET" action="{{ url_for('news') }}" class="search-form">
+                <input type="text" name="search" placeholder="Поиск новостей..." value="{{ request.args.get('search', '') }}">
+                <img src="{{ url_for('static', filename='images/search-icon.svg') }}" alt="Search">
+            </form>
+        </div>
+        <div class="categories">
+            {% for category, name in categories.items() %}
+            <a href="{{ url_for('news', category=category) }}" 
+               class="category-button {% if current_category == category %}active{% endif %}">
+                {{ name }}
+            </a>
+            {% endfor %}
+        </div>
+        <button class="theme-toggle" type="button" aria-label="Переключить тему">
+            <i class="fas {% if theme == 'dark' %}fa-sun{% else %}fa-moon{% endif %}"></i>
+        </button>
+    </div>
+
+    {% if user %}
+    <div class="top-curtain">
+        <div class="user-profile-header">
+            <div class="user-avatar">
+                <img src="{{ url_for('static', filename='uploads/avatars/' + (user.avatar or 'default-avatar.png')) }}" alt="Avatar">
+                </div>
+            <div class="user-info-header">
+                <div class="user-name">{{ user.nickname or user.email }}</div>
+                <div class="user-stats">
+                    <span>{{ hours_online }}ч {{ minutes_online }}мин на сайте</span>
+                    <span>•</span>
+                    <span>Регистрация: {{ user.registration_date.strftime('%d.%m.%Y') }}</span>
+                        {% if (datetime.utcnow() - user.last_login).total_seconds() < 300 %}
+                    <span class="online">Онлайн</span>
+                        {% else %}
+                    <span>Последний вход: {{ user.last_login.strftime('%H:%M') }}</span>
+                        {% endif %}
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-link">Выйти</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user %}
+    <div class="side-menu">
+        <a href="{{ url_for('profile') }}" class="side-menu-item">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </a>
+        <a href="{{ url_for('favorites') }}" class="side-menu-item">
+            <i class="fas fa-heart"></i>
+            <span>Избранное</span>
+        </a>
+        <a href="{{ url_for('history') }}" class="side-menu-item">
+            <i class="fas fa-history"></i>
+            <span>История</span>
+        </a>
+        <a href="{{ url_for('settings') }}" class="side-menu-item">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </a>
+    </div>
+    {% else %}
+    <div class="auth-buttons">
+        <a href="{{ url_for('index') }}" class="auth-button">Войти</a>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <div class="news-grid">
+            {% for article in articles %}
+            <div class="news-card animate-on-scroll" style="--card-index: {{ loop.index }}">
+                {% if article.urlToImage %}
+                <div class="news-image">
+                    <img src="{{ article.urlToImage }}" alt="{{ article.title }}">
+                </div>
+                {% endif %}
+                <div class="news-content">
+                    <h2>{{ article.title }}</h2>
+                    <p>{{ article.description }}</p>
+                    <div class="news-meta">
+                        <span class="news-date">{{ article.publishedAt }}</span>
+                        <a href="{{ url_for('article', article_url=article.url, category=current_category, search=request.args.get('search', '')) }}" class="read-more">Читать статью</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Функция для установки темы
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const themeToggles = document.querySelectorAll('.theme-toggle');
+            themeToggles.forEach(toggle => {
+                const icon = toggle.querySelector('i');
+                const text = toggle.querySelector('span');
+                
+                if (icon) {
+                    icon.className = `fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`;
+                }
+                if (text) {
+                    text.textContent = theme === 'dark' ? 'Светлая тема' : 'Тёмная тема';
+                }
+            });
+        }
+
+        // Инициализация темы
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+
+            // Обработчик клика по кнопке
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    setTheme(newTheme);
+                    
+                    // Отправляем запрос на сервер для сохранения темы
+                    fetch('/update_theme', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'theme': newTheme
+                        })
+                    });
+                });
+            }
+
+            // Анимация появления карточек
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            });
+
+            document.querySelectorAll('.animate-on-scroll').forEach(element => {
+                observer.observe(element);
+            });
+
+            // Анимация поиска
+            const searchForm = document.querySelector('.search-form');
+            if (searchForm) {
+                searchForm.addEventListener('focus', () => {
+                    searchForm.style.transform = 'scale(1.02)';
+                }, true);
+
+                searchForm.addEventListener('blur', () => {
+                    searchForm.style.transform = 'scale(1)';
+                }, true);
+            }
+        });
+    </script>
+</body>
+</html> 

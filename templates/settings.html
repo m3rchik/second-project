@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки профиля</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="article-header">
+        <div class="article-nav">
+            <a href="{{ url_for('news') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Вернуться к новостям
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="settings-container">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" enctype="multipart/form-data" class="settings-form">
+                <div class="settings-section">
+                    <h2>Основная информация</h2>
+                    <div class="form-group">
+                        <label for="nickname">Псевдоним</label>
+                        <input type="text" id="nickname" name="nickname" value="{{ user.nickname or '' }}" class="form-input" placeholder="Введите псевдоним">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" value="{{ user.email }}" class="form-input" disabled>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>Аватар</h2>
+                    <div class="avatar-section">
+                        <div class="avatar-preview">
+                            <img src="{{ url_for('static', filename='uploads/avatars/' + (profile.avatar_path if profile and profile.avatar_path else 'default-avatar.png')) }}" alt="Текущий аватар" id="avatar-preview">
+                        </div>
+                        <div class="form-group">
+                            <label for="avatar" class="file-input-label">
+                                <i class="fas fa-upload"></i> Загрузить новый аватар
+                            </label>
+                            <input type="file" id="avatar" name="avatar" accept="image/*" class="file-input">
+                            <div class="field-hint">Рекомендуемый размер: 200x200 пикселей</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>О себе</h2>
+                    <div class="form-group">
+                        <textarea id="bio" name="bio" class="form-input" rows="4" placeholder="Расскажите о себе">{{ profile.bio if profile else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>Предпочтения</h2>
+                    <div class="form-group">
+                        <label>Интересующие категории</label>
+                        <div class="categories-grid">
+                            {% for category, name in categories.items() %}
+                            <label class="category-checkbox">
+                                <input type="checkbox" name="preferred_categories" value="{{ category }}"
+                                       {% if profile and category in profile.preferred_categories %}checked{% endif %}>
+                                <span>{{ name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>Уведомления</h2>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="email_notifications"
+                                   {% if profile and profile.notification_preferences.get('email_notifications') %}checked{% endif %}>
+                            <span>Получать уведомления по email</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="browser_notifications"
+                                   {% if profile and profile.notification_preferences.get('browser_notifications') %}checked{% endif %}>
+                            <span>Получать уведомления в браузере</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>Изменить пароль</h2>
+                    <div class="form-group">
+                        <input type="password" id="new_password" name="new_password" class="form-input" placeholder="Новый пароль">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-button">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Предпросмотр аватара
+        document.getElementById('avatar').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatar-preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html> 
